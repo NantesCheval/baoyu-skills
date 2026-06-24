@@ -557,10 +557,18 @@ interface CliOptions {
 }
 
 function preprocessCjkEmphasis(markdown: string): string {
+  let frontMatterBlock = "";
+  let body = markdown;
+  const fmMatch = markdown.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n/);
+  if (fmMatch) {
+    frontMatterBlock = fmMatch[0];
+    body = markdown.slice(fmMatch[0].length);
+  }
+
   const processor = unified()
     .use(remarkParse)
     .use(remarkCjkFriendly);
-  const tree = processor.parse(markdown);
+  const tree = processor.parse(body);
   const visit = (node: any, parent?: any, index?: number) => {
     if (node.children) {
       for (let i = 0; i < node.children.length; i++) {
@@ -587,7 +595,7 @@ function preprocessCjkEmphasis(markdown: string): string {
   result = result.replace(/&#x([0-9A-Fa-f]+);/g, (_, hex) =>
     String.fromCodePoint(parseInt(hex, 16))
   );
-  return result;
+  return frontMatterBlock + result;
 }
 
 function renderMarkdown(raw: string, renderer: RendererAPI): {
